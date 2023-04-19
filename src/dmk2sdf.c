@@ -474,6 +474,9 @@ static uint8 ExtractDMKSector (DMK_CTX *dmk, uint8 side, uint8 cyl, uint8 index,
 			StatusOut("Track has %d byte sector (head=%d, cyl=%d, sector=%d)" EOL_STR, size, side, cyl, outInfo->sector);
 		}
 
+		// Set density flag
+		outInfo->idPos |= dmk->dden ? 0: 0x4000;
+
 		// Scan for the Data Mark within the maximum gap range
 		dmk->scanPos = idPos;
 		ScanOffsetDMK(dmk, 7);
