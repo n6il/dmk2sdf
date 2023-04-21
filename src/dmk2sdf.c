@@ -161,7 +161,8 @@ typedef struct {
 
 enum {
 	kBadCRCFlag					= 0x8000u,
-	kDeletedMarkFlag			= 0x4000
+	kDeletedMarkFlag			= 0x4000,
+	kFMDensityFlag				= 0x4000
 };
 
 
@@ -459,6 +460,16 @@ static uint8 ExtractDMKSector (DMK_CTX *dmk, uint8 side, uint8 cyl, uint8 index,
 			StatusOut("Bad CRC in ID field (head=%d, cyl=%d, pos=%04x, crc=%04x)" EOL_STR, side, cyl, outInfo->idPos, crc);
 		}
 
+		// Set flag bit for a sector recorded in single-density.
+		if (!dmk->dden) {
+			outInfo->idPos |= LittleEndian16 (kFMDensityFlag);
+
+			// Report the single-density sector when disk is designated as double-density
+			if (!dmk->fmDisk) {
+				StatusOut ("Sector recorded in Single-Density (head=%d, cyl=%d, sector=%d)" EOL_STR, side, cyl, outInfo->sector);
+			}
+		}
+
 		// Report unusual ID Fields
 		if (outInfo->side != side) {
 			StatusOut("ID field has unexpected Side number of %d  (head=%d, cyl=%d, sector=%d)" EOL_STR, outInfo->side, side, cyl, outInfo->sector);
@@ -473,9 +484,6 @@ static uint8 ExtractDMKSector (DMK_CTX *dmk, uint8 side, uint8 cyl, uint8 index,
 			size = 128 << (outInfo->sizeCode & 0x03);
 			StatusOut("Track has %d byte sector (head=%d, cyl=%d, sector=%d)" EOL_STR, size, side, cyl, outInfo->sector);
 		}
-
-		// Set density flag
-		outInfo->idPos |= dmk->dden ? 0: 0x4000;
 
 		// Scan for the Data Mark within the maximum gap range
 		dmk->scanPos = idPos;
